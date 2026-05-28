@@ -5,6 +5,7 @@ A production-grade, end-to-end real-time data engineering project that ingests l
 **Zero paid APIs. Fully open-source.**
 
 ![Dashboard Screenshot](docs/dashboard.png)
+![Dashboard Screenshot](docs/dashboard2.png)
 
 ---
 
