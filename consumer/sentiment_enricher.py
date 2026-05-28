@@ -9,14 +9,18 @@ for ensemble sentiment scoring.
 Sentiment labels: POSITIVE | NEGATIVE | NEUTRAL | MIXED
 """
 
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from textblob import TextBlob
 from dataclasses import dataclass
 
-# ─── Data Classes ─────────────────────────────────────────────────────────────
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from textblob import TextBlob
+
+# ─── Data Classes ─────────────────────────────────────────────────────────[...]
+
 
 @dataclass
 class SentimentResult:
+    """Result of sentiment analysis."""
+
     label:         str          # POSITIVE | NEGATIVE | NEUTRAL | MIXED
     compound:      float        # -1.0 to 1.0
     vader_pos:     float
@@ -27,13 +31,18 @@ class SentimentResult:
     confidence:    float        # agreement between models (0-1)
 
 
-# ─── Analyser ────────────────────────────────────────────────────────────────
+# ─── Analyser ──────────────────────────────────────────────────────────────[...]
+
 
 class SentimentEnricher:
+    """Sentiment analysis using VADER and TextBlob ensemble."""
+
     def __init__(self):
+        """Initialize sentiment analyzer."""
         self._vader = SentimentIntensityAnalyzer()
 
     def analyse(self, text: str) -> SentimentResult:
+        """Analyse text and return sentiment result."""
         if not text or not text.strip():
             return SentimentResult(
                 label="NEUTRAL", compound=0.0,
@@ -90,6 +99,7 @@ class SentimentEnricher:
 
     @staticmethod
     def _label(compound: float, v_comp: float, tb_pol: float) -> str:
+        """Determine sentiment label based on compound and component scores."""
         same_sign = (v_comp >= 0) == (tb_pol >= 0)
         if not same_sign and abs(v_comp) > 0.2 and abs(tb_pol) > 0.2:
             return "MIXED"
@@ -100,7 +110,7 @@ class SentimentEnricher:
         return "NEUTRAL"
 
 
-# ─── Quick test ──────────────────────────────────────────────────────────────
+# ─── Quick test ─────────────────────────────────────────────────────────────[...]
 
 if __name__ == "__main__":
     e = SentimentEnricher()
