@@ -3,14 +3,13 @@ Kafka Consumer - Pure Python
 Flushes every record immediately so the dashboard updates in real time.
 """
 
-import os
 import json
 import logging
 import time
-import pandas as pd
-
 from datetime import datetime, timezone
 from pathlib import Path
+
+import pandas as pd
 from kafka import KafkaConsumer
 
 from sentiment_enricher import SentimentEnricher
@@ -33,6 +32,7 @@ enricher = SentimentEnricher()
 
 
 def write_parquet(records, path):
+    """Write records to parquet file with type coercion."""
     df = pd.DataFrame(records)
     for col in ["score", "num_comments"]:
         if col in df.columns:
@@ -64,6 +64,7 @@ def process(record):
 
 
 def run():
+    """Start Kafka consumer and process messages."""
     BRONZE_PATH.mkdir(parents=True, exist_ok=True)
     SILVER_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -86,7 +87,7 @@ def run():
         while True:
             batch = consumer.poll(timeout_ms=5000)
             count = 0
-            for tp, messages in batch.items():
+            for messages in batch.values():
                 for msg in messages:
                     if msg.value and msg.value.get("id"):
                         if process(msg.value):
