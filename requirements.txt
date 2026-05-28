@@ -1,24 +1,6 @@
-# Root requirements (install all for full local dev)
-# Or use per-component venvs (recommended, see setup.sh)
-
-# Orchestration
-apache-airflow==2.7.0
-
-# Producer
-kafka-python==2.0.2
-requests==2.31.0
-
-# Consumer
-pyspark==3.5.0
-vaderSentiment==3.3.2
-textblob==0.17.1
-
-# dbt
-dbt-core==1.7.0
-dbt-duckdb==1.7.0
-duckdb==0.9.2
-
-# Dashboard
+# Streamlit Cloud / Dashboard dependencies
+# For full local dev (Airflow, dbt, Spark), use requirements-dev.txt
 streamlit==1.31.0
 plotly==5.18.0
 pandas==2.0.3
+duckdb==0.9.2

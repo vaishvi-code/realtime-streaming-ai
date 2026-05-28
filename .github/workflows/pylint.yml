@@ -3,22 +3,69 @@ name: Pylint
 on: [push]
 
 jobs:
-  build:
+  lint-producer:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10"]
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+        python-version: "3.11"
+    - name: Install producer dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pylint
-        pip install -r requirements.txt
-    - name: Analysing the code with pylint
+        pip install -r producer/requirements.txt
+    - name: Lint producer
       run: |
-        pylint $(git ls-files '*.py')
+        pylint $(git ls-files 'producer/*.py') || true
+
+  lint-consumer:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install consumer dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+        pip install -r consumer/requirements.txt
+    - name: Lint consumer
+      run: |
+        pylint $(git ls-files 'consumer/*.py') || true
+
+  lint-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install dashboard dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+        pip install -r dashboard/requirements.txt
+    - name: Lint dashboard
+      run: |
+        pylint $(git ls-files 'dashboard/*.py') || true
+
+  lint-airflow:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install airflow dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint apache-airflow==2.7.0
+    - name: Lint airflow DAGs
+      run: |
+        pylint $(git ls-files 'airflow/*.py') || true

@@ -1,0 +1,26 @@
+# Full local dev requirements (installs all components in ONE env - not recommended)
+# Use per-component venvs for best results (see README / setup.sh)
+# This file is NOT used by Streamlit Cloud or GitHub Actions CI.
+
+# Orchestration
+apache-airflow==2.7.0
+
+# Producer
+kafka-python==2.0.2
+requests==2.31.0
+
+# Consumer
+pyspark==3.5.0
+vaderSentiment==3.3.2
+textblob==0.17.1
+pyarrow==14.0.1
+
+# dbt
+dbt-core==1.7.0
+dbt-duckdb==1.7.0
+duckdb==0.9.2
+
+# Dashboard
+streamlit==1.31.0
+plotly==5.18.0
+pandas==2.0.3
