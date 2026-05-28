@@ -1,0 +1,5 @@
+kafka-python==2.0.2
+vaderSentiment==3.3.2
+textblob==0.17.1
+pandas==2.1.4
+pyarrow==14.0.1

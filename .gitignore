@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv*/
+venv/
+.env
+
+# Data lake (don't commit data, only schema/code)
+data/bronze/
+data/silver/
+data/gold/
+data/checkpoints/
+logs/
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/.dbt/
+
+# Spark
+derby.log
+metastore_db/
+spark-warehouse/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml

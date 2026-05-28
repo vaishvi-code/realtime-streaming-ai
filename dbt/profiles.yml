@@ -1,0 +1,7 @@
+sentiment_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DBT_DB_PATH', '../data/gold/sentiment_warehouse.duckdb') }}"
+      threads: 4
