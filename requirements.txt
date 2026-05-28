@@ -1,6 +1,9 @@
 # Root requirements (install all for full local dev)
 # Or use per-component venvs (recommended, see setup.sh)
 
+# Orchestration
+apache-airflow==2.7.0
+
 # Producer
 kafka-python==2.0.2
 requests==2.31.0
