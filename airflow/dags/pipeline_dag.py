@@ -15,7 +15,6 @@ from __future__ import annotations
 import logging
 import subprocess
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
@@ -25,7 +24,7 @@ from airflow.utils.trigger_rule import TriggerRule
 
 logger = logging.getLogger(__name__)
 
-# ─── DAG Defaults ────────────────────────────────────────────────────────────
+# ─── DAG Defaults ─────────────────────────────────────────────────────────[...]
 
 DEFAULT_ARGS = {
     "owner":            "data-engineering",
@@ -41,23 +40,22 @@ DBT_PROJECT_DIR = "/opt/airflow/data/../dbt"   # adjust if needed
 DATA_DIR        = "/opt/airflow/data"
 
 
-# ─── Task Functions ──────────────────────────────────────────────────────────
+# ─── Task Functions ────────────────────────────────────────────────────────[...]
 
 def check_kafka_health(**ctx):
     """Verify Kafka broker is reachable via kafka-topics CLI."""
     try:
         result = subprocess.run(
             ["kafka-topics", "--bootstrap-server", "kafka:29092", "--list"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True, text=True, timeout=15, check=False,
         )
         if result.returncode == 0:
             logger.info("Kafka healthy. Topics: %s", result.stdout.strip())
             return "run_dbt_silver"
-        else:
-            logger.error("Kafka unhealthy: %s", result.stderr)
-            return "handle_kafka_failure"
-    except Exception as e:
-        logger.error("Kafka check failed: %s", e)
+        logger.error("Kafka unhealthy: %s", result.stderr)
+        return "handle_kafka_failure"
+    except subprocess.TimeoutExpired as e:
+        logger.error("Kafka check timed out: %s", e)
         return "handle_kafka_failure"
 
 
@@ -75,7 +73,7 @@ def validate_silver_data(**ctx):
         if count == 0:
             raise ValueError("Silver layer is empty — pipeline may not be running")
         ctx["ti"].xcom_push(key="silver_count", value=count)
-    except Exception as e:
+    except ValueError as e:
         logger.error("Silver validation failed: %s", e)
         raise
 
@@ -92,14 +90,15 @@ def validate_gold_data(**ctx):
                 logger.info("Gold table %s: %d rows", table, count)
                 if count == 0:
                     logger.warning("Gold table %s is empty", table)
-            except Exception:
-                logger.warning("Gold table %s does not exist yet", table)
+            except Exception as table_error:
+                logger.warning("Gold table %s does not exist yet: %s", table, table_error)
     except Exception as e:
         logger.error("Gold validation failed: %s", e)
         raise
 
 
 def log_pipeline_stats(**ctx):
+    """Log pipeline completion statistics."""
     silver_count = ctx["ti"].xcom_pull(key="silver_count", task_ids="validate_silver")
     logger.info("=" * 50)
     logger.info("Pipeline cycle complete")
@@ -109,13 +108,14 @@ def log_pipeline_stats(**ctx):
 
 
 def handle_failure(**ctx):
+    """Handle pipeline failures with logging and alerting."""
     task_id = ctx.get("task_instance").task_id
     logger.error("PIPELINE FAILURE in task: %s", task_id)
     logger.error("Check Airflow logs for details. Consider restarting the Spark consumer.")
     # In production: send Slack/PagerDuty alert here
 
 
-# ─── DAG Definition ──────────────────────────────────────────────────────────
+# ─── DAG Definition ────────────────────────────────────────────────────────[...]
 
 with DAG(
     dag_id          = "realtime_sentiment_pipeline",
