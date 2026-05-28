@@ -14,13 +14,12 @@ import json
 import time
 import logging
 import hashlib
-import requests
-
 from datetime import datetime, timezone
-from kafka import KafkaProducer
-from kafka.errors import KafkaError
 
-# ─── Config ──────────────────────────────────────────────────────────────────
+import requests
+from kafka import KafkaProducer
+
+# ─── Config ───────────────────────────────────────────────────────────[...]
 
 KAFKA_BOOTSTRAP = "localhost:9092"
 TOPIC_RAW       = "raw-posts"
@@ -32,7 +31,7 @@ LOG_LEVEL       = logging.INFO
 HN_TOP_STORIES  = "https://hacker-news.firebaseio.com/v0/topstories.json"
 HN_ITEM         = "https://hacker-news.firebaseio.com/v0/item/{}.json"
 
-# ─── Logging ─────────────────────────────────────────────────────────────────
+# ─── Logging ──────────────────────────────────────────────────────────────[...]
 
 logging.basicConfig(
     level=LOG_LEVEL,
@@ -42,9 +41,10 @@ logging.basicConfig(
 logger = logging.getLogger("hn-producer")
 
 
-# ─── Kafka Setup ─────────────────────────────────────────────────────────────
+# ─── Kafka Setup ─────────────────────────────────────────────────────────[...]
 
 def build_producer() -> KafkaProducer:
+    """Build and return configured Kafka producer."""
     return KafkaProducer(
         bootstrap_servers=KAFKA_BOOTSTRAP,
         value_serializer=lambda v: json.dumps(v).encode("utf-8"),
@@ -56,15 +56,17 @@ def build_producer() -> KafkaProducer:
     )
 
 
-# ─── HN API Helpers ──────────────────────────────────────────────────────────
+# ─── HN API Helpers ────────────────────────────────────────────────────────[...]
 
 def fetch_top_ids(n: int = MAX_STORIES) -> list[int]:
+    """Fetch top N story IDs from Hacker News."""
     resp = requests.get(HN_TOP_STORIES, timeout=10)
     resp.raise_for_status()
     return resp.json()[:n]
 
 
 def fetch_item(item_id: int) -> dict | None:
+    """Fetch item details from Hacker News API."""
     resp = requests.get(HN_ITEM.format(item_id), timeout=10)
     resp.raise_for_status()
     return resp.json()
@@ -92,9 +94,10 @@ def message_key(item: dict) -> str:
     return hashlib.md5(f"{item['source']}:{item['id']}".encode()).hexdigest()
 
 
-# ─── Main Loop ───────────────────────────────────────────────────────────────
+# ─── Main Loop ──────────────────────────────────────────────────────────[...]
 
 def run():
+    """Main producer loop."""
     logger.info("Starting Hacker News → Kafka producer")
     producer   = build_producer()
     seen_ids   = set()          # in-memory dedup (resets on restart; extend with Redis for prod)
@@ -136,7 +139,7 @@ def run():
 
                     time.sleep(0.2)   # gentle rate limiting
 
-                except Exception as item_exc:
+                except requests.RequestException as item_exc:
                     # Route bad records to DLQ
                     logger.warning("Sending item %d to DLQ: %s", item_id, item_exc)
                     producer.send(TOPIC_DLQ, value={
