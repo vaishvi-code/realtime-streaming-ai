@@ -1,6 +1,7 @@
 # Streamlit Cloud / Dashboard dependencies
+# Python 3.12 is pinned via .python-version
 # For full local dev (Airflow, dbt, Spark), use requirements-dev.txt
-streamlit==1.31.0
-plotly==5.18.0
-pandas==2.0.3
-duckdb==0.9.2
+streamlit>=1.35.0
+plotly>=5.18.0
+pandas>=2.1.0
+duckdb>=0.10.0
