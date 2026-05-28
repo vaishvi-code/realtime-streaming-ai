@@ -11,12 +11,12 @@ import json
 import time
 import logging
 import hashlib
-import requests
-
 from datetime import datetime, timezone
+
+import requests
 from kafka import KafkaProducer
 
-# ─── Config ──────────────────────────────────────────────────────────────────
+# ─── Config ───────────────────────────────────────────────────────────[...]
 
 KAFKA_BOOTSTRAP = "localhost:9092"
 TOPIC_RAW       = "raw-posts"
@@ -37,9 +37,10 @@ logging.basicConfig(
 logger = logging.getLogger("reddit-producer")
 
 
-# ─── Producer ────────────────────────────────────────────────────────────────
+# ─── Producer ──────────────────────────────────────────────────────────[...]
 
 def build_producer():
+    """Build and return configured Kafka producer."""
     return KafkaProducer(
         bootstrap_servers=KAFKA_BOOTSTRAP,
         value_serializer=lambda v: json.dumps(v).encode("utf-8"),
@@ -50,6 +51,7 @@ def build_producer():
 
 
 def fetch_subreddit(sub: str, limit: int = POSTS_PER_SUB) -> list[dict]:
+    """Fetch hot posts from a subreddit."""
     url  = f"https://www.reddit.com/r/{sub}/hot.json?limit={limit}"
     resp = requests.get(url, headers=HEADERS, timeout=15)
     resp.raise_for_status()
@@ -58,6 +60,7 @@ def fetch_subreddit(sub: str, limit: int = POSTS_PER_SUB) -> list[dict]:
 
 
 def normalize(post: dict, subreddit: str) -> dict:
+    """Normalize Reddit post to unified schema."""
     return {
         "id":           post.get("id", ""),
         "source":       "reddit",
@@ -74,6 +77,7 @@ def normalize(post: dict, subreddit: str) -> dict:
 
 
 def run():
+    """Main producer loop."""
     logger.info("Starting Reddit → Kafka producer (public API, no auth)")
     producer = build_producer()
     seen_ids = set()
@@ -93,7 +97,7 @@ def run():
                         producer.send(TOPIC_RAW, key=key, value=msg)
                         seen_ids.add(post["id"])
                         total_sent += 1
-                    except Exception as e:
+                    except requests.RequestException as e:
                         producer.send(TOPIC_DLQ, value={
                             "post_id":   post.get("id"),
                             "subreddit": sub,
